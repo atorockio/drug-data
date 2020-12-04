@@ -1,6 +1,7 @@
 const $heatmap_container = $('#heatmap');
 const heatmap_directory = $heatmap_container.data('heatmapDir');
 const heatmap_file = heatmap_directory + 'main.csv';
+// removed nci links because the were not working consistently
 // const URL_nci = 'https://cancer.gov/publications/dictionaries/cancer-drug/def/';
 const URL_pchem = 'https://pubchem.ncbi.nlm.nih.gov/compound/';
 
@@ -12,7 +13,7 @@ d3.csv(heatmap_file).then(function(data) {
     var select_pathway = document.getElementById("pathwaySel");
     var select_target = document.getElementById("targetSel");
     var select_compound_name = document.getElementById("compoundSel");
-    // select_pathway.options[select_pathway.options.length] = new Option('Pathway', 'Pathway', True);
+
     var pathways = [];
     var targets = [];
     var compound_names = [];
@@ -37,6 +38,7 @@ d3.csv(heatmap_file).then(function(data) {
             'cmpd_number' :  d.cmpd_number,
             'primary_target' : d['Primary Target'],
             'pathway' : d.Pathway,
+            // removed nci links because the were not working consistently
             // 'URL_nci' : URL_nci + d.cmpd_name,
             'URL_pchem': URL_pchem + d.cmpd_name,
             'row_class' : make_class_name(d.cmpd_name)+" "+make_class_name(d['Primary Target'])+" "+make_class_name(d.Pathway)
@@ -44,14 +46,12 @@ d3.csv(heatmap_file).then(function(data) {
 
         };
 
-        //make class for each attribute: pathway, cmpnd, and target so you can manipulate here.
-        //make class each
 
+        // set up the select boxes for the filters
         if (!(pathways.includes(d.Pathway))) {
             select_pathway.options[select_pathway.options.length] = new Option(d.Pathway, d.Pathway);
             pathways.push(d.Pathway);
         }
-
         if (!(targets.includes(d['Primary Target']))) {
             select_target.options[select_target.options.length] = new Option(d['Primary Target'], d['Primary Target']);
             targets.push(d['Primary Target']);
@@ -75,6 +75,7 @@ d3.csv(heatmap_file).then(function(data) {
     var caption = table.append("caption")
         .attr("class", "heatmap-caption");
 
+    // set up the dimensions for the heatmap color scale
     const caption_width = 340;
     const scale_x_margin = 20;
     const scale_width = caption_width - scale_x_margin * 2;
@@ -95,12 +96,14 @@ d3.csv(heatmap_file).then(function(data) {
     var linearGradient = defs.append("linearGradient")
         .attr("id", "linear-gradient");
 
+    // add color stops to gradient so that it follows the interpolateHcl of the heatmap colors
     for (var i = scale_min; i <= scale_max; i++) {
         linearGradient.append("stop")
             .attr("offset", i / scale_max)
             .attr("stop-color", color(i));
     }
 
+    // add the color scale to the table caption
     svg.append("rect")
         .attr("width", scale_width)
         .attr("height", scale_height)
@@ -108,6 +111,7 @@ d3.csv(heatmap_file).then(function(data) {
         .style("fill", "url(#linear-gradient)");
 
 
+    // add markings and numbering to the color scale
     for (let i = 5; i <= 25; i += 5) {
 
         const position = scale_x_margin + i / scale_max * scale_width - 1;
@@ -143,7 +147,7 @@ d3.csv(heatmap_file).then(function(data) {
         }
     }
 
-    // add in table headers do display drug info
+    // add in table headers to display drug info
     // "yes" for Pathway Sort is for marking it as the default sort column
     tableHeaders.unshift(["Pathway Sort", "yes"], "Pathway", "Target", "Compound Name","PubChem Link");
     sortTypes.unshift('float', 'string', 'string', 'string', '');
@@ -298,7 +302,6 @@ document.getElementById("pathwaySel").onchange = function(e) {
         }
     });
 
-
     // remove ', ' at end of string
     var str = display.innerHTML.slice(0, -2);
 
@@ -310,22 +313,6 @@ document.getElementById('clear_button').onclick = function(e) {
     location.reload();
 
 };
-
-/*document.getElementById('demoForm').onsubmit = function(e) {
-    // reference to select list using this keyword and form elements collection
-    // no callback function used this time
-
-
-    var opts = getSelectedOptions(this.elements['demoSel[]']);
-    if (isset($_POST['clear_button'])) {
-        var opts = []
-    }
-
-
-    alert('The number of options selected is: ' + opts.length);  //  number of selected options
-
-    return false; // don't return online form
-};*/
 
 function callback(opt) {
     // display in textarea for this example
@@ -368,6 +355,7 @@ document.getElementById("targetSel").onchange = function(e) {
     var str = display.innerHTML.slice(0, -2);
     display.innerHTML = str;
 };
+
 document.getElementById('demoForm1').onsubmit = function(e) {
     // reference to select list using this keyword and form elements collection
     // no callback function used this time
@@ -380,6 +368,7 @@ document.getElementById('demoForm1').onsubmit = function(e) {
 
     return false; // don't return online form
 };
+
 // example callback function (selected options passed one by one)
 function callback1(opt) {
     // display in textarea for this example
@@ -414,7 +403,7 @@ document.getElementById("compoundSel").onchange = function(e) {
             if ($(this).hasClass(classes[i])){
                 $(this).show()
             }
-                }
+        }
     });
 
 
@@ -617,32 +606,12 @@ function drawGraph (cell_line, compound_number, ic50/*, HillSlope*/) {
         let max_inhibitions = d3.max(dataset, function(d) { return d.inhibition;} );
         let min_inhibitions = d3.min(dataset, function(d) { return d.inhibition;} );
 
-        // Add dose_response_curve 
-        
-        //original
-        LogIC50 = Math.log10(+ic50);
-        //dataset.forEach(function(d){
-        //    if (isNaN(LogIC50) || isNaN(HillSlope)) {
-        //        d.dose_response_curve = false;
-        //    } else {
-        //        d.dose_response_curve = dose_response_curve(
-        //            d.dose,
-        //            100,
-        //            0,
-        //            LogIC50,
-        //            HillSlope
-        //        );
-        //    }
-        //});
-        
-        //wendy modification
+        // Add dose_response_curve -- wendy modification
         dataset.forEach(function(d){
-                d.dose_response_curve = dose_response_curve(
-                    d.dose, top, bottom, xmid, scal, s
-                );
+            d.dose_response_curve = dose_response_curve(
+                d.dose, top, bottom, xmid, scal, s
+            );
         });
-
-        //console.log(dataset);
 
         const yScale = d3.scaleLinear()
             .domain([
@@ -728,9 +697,6 @@ function drawGraph (cell_line, compound_number, ic50/*, HillSlope*/) {
             return "dose: " +  fmt(d.dose) + "\n"
                 + "inhibition: " + fmt(d.inhibition);
         });
-
-
-
     })
 
     .catch(function(error) {
@@ -744,17 +710,8 @@ function drawGraph (cell_line, compound_number, ic50/*, HillSlope*/) {
     });
 }
 
-//function dose_response_curve(concentration, top, bottom, LogIC50, HillSlope) {
-//    return bottom + (top - bottom)/
-//        (1 + Math.pow(10, ((LogIC50-concentration)*HillSlope)));
-//}
-
 function dose_response_curve(concentration, top, bottom, xmid, scal, s) {
     top = top * 100
     bottom = bottom * 100
     return bottom+(top-bottom)/Math.pow(1+Math.pow(10, ((xmid-concentration)*scal)),s);    
 }
-
-//yfit <- bottom+(top-bottom)/(1+10^((xmid-X)*scal))^s
-
-//drawGraph('ST8814','Refametinib (RDEA119, Bay 86-9766)',0.2624, 1.136)
